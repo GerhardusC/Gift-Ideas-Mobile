@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, FlatList, ScrollView, Button, TextInput } from 'react-native';
+import { StyleSheet, View, Text, FlatList, Button, TextInput, TouchableOpacity, Alert } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
@@ -8,7 +8,7 @@ type Todo = {
     todo: string,
 }
 
-export default function TabOneScreen() {
+export default function GiftIdeasScreen() {
     const [currentTodo, setCurrentTodo] = useState("");
 
     const editInputRef = useRef<TextInput>(null);
@@ -32,16 +32,16 @@ CREATE TABLE IF NOT EXISTS todos (
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>To-Do list</Text>
+            <Text style={styles.title}>GIFT IDEAS:</Text>
             <TextInput
                 value={currentTodo}
-                placeholder='Todo content'
+                placeholder='Gift name'
                 onChangeText={(newText) => {
                     setCurrentTodo(newText);
                 }}
             />
             <Button
-                title='Add todo'
+                title='Add Gift'
                 onPress={() => {
                     (async () => {
                         if(currentTodo !== ""){
@@ -56,7 +56,7 @@ VALUES (?);
                             setCurrentTodo("");
                             
                         } else {
-                            alert("No todo content.")
+                            Alert.alert("No todo content.")
                         }
                     })()
                 }}
@@ -72,19 +72,21 @@ VALUES (?);
                                 {
                                     editingTodo !== item.item.ID ?
                                     <>
-                                        <Text>{item.item.todo}</Text>
-                                        <Button
-                                            title='Edit'
-                                            color="#2a3"
+                                        <Text style={styles.colOne}>{item.item.todo}</Text>
+                                        <TouchableOpacity
+                                            style={styles.editArea}
                                             onPress={() => {
                                                 setEditingTodo(item.item.ID);
                                                 setCurrentTodo(item.item.todo);
                                             }}
-                                        />
+                                        >
+                                            <Text style={styles.editButton}>Edit</Text>
+                                        </TouchableOpacity>
                                     </>
                                     :
                                     <>
                                         <TextInput
+                                            style={styles.colOne}
                                             ref={editInputRef}
                                             value={currentTodo}
                                             autoFocus
@@ -98,50 +100,75 @@ VALUES (?);
                                                 setCurrentTodo(newText);
                                             }}
                                         />
-                                        <Button
-                                            title='Confirm'
-                                            color="#990"
-                                            onPress={() => {
-                                                if(currentTodo !== ""){
-                                                    (async () => {
-                                                        const db = await SQLite.openDatabaseAsync("dev");
-                                                        const changed = await db.runAsync(`
+                                        <View
+                                            style={styles.editArea}
+                                        >
+                                            <Button
+                                                title='✅'
+                                                color="#eee"
+                                                onPress={() => {
+                                                    if(currentTodo !== ""){
+                                                        (async () => {
+                                                            const db = await SQLite.openDatabaseAsync("dev");
+                                                            const changed = await db.runAsync(`
 UPDATE todos
 SET todo = ?
 WHERE ID = ?;
-                                                            `, [currentTodo, item.item.ID])
-                                                        console.log(changed.changes)
-                                                        const todos = await db.getAllAsync<Todo>("SELECT * FROM todos;");
-                                                        setTodos(todos);
-                                                        setCurrentTodo("");
-                                                        setEditingTodo(null);
-                                                    })()
-                                                } else {
-                                                    alert("No current todo.")
-                                                }
-                                            }}
-                                        />
-                                        <Button
-                                            title='Cancel'
-                                            color="#909"
-                                            onPress={() => {
-                                                setEditingTodo(null);
-                                                setCurrentTodo("");
-                                            }}
-                                        />
+                                                                `, [currentTodo, item.item.ID])
+                                                            console.log(changed.changes)
+                                                            const todos = await db.getAllAsync<Todo>("SELECT * FROM todos;");
+                                                            setTodos(todos);
+                                                            setCurrentTodo("");
+                                                            setEditingTodo(null);
+                                                        })()
+                                                    } else {
+                                                        Alert.alert("No content for todo", "Set the new todo correctly before clicking OK.")
+                                                    }
+                                                }}
+                                            />
+                                            <Button
+                                                title='❌'
+                                                color="#ddd"
+                                                onPress={() => {
+                                                    setEditingTodo(null);
+                                                    setCurrentTodo("");
+                                                }}
+                                            />
+                                        </View>
                                     </>
                                 }
-                                <Button
-                                    title='Delete'
+                                <TouchableOpacity
+                                    style={styles.deleteArea}
                                     onPress={() => {
-                                        (async () => {
-                                            const db = await SQLite.openDatabaseAsync("dev");
-                                            await db.runAsync("DELETE FROM todos WHERE ID = (?)", [item.item.ID]);
-                                            const todos = await db.getAllAsync<Todo>("SELECT ID, todo FROM todos");
-                                            setTodos(todos);
-                                        })()
+                                        Alert.alert(
+                                            "Are you sure?",
+                                            "Do you really want to delete this todo?",
+                                            [
+                                                {
+                                                    text: "Yes",
+                                                    onPress: () => {
+                                                        (async () => {
+                                                            const db = await SQLite.openDatabaseAsync("dev");
+                                                            await db.runAsync("DELETE FROM todos WHERE ID = (?)", [item.item.ID]);
+                                                            const todos = await db.getAllAsync<Todo>("SELECT ID, todo FROM todos");
+                                                            setTodos(todos);
+                                                        })()
+                                                    }
+                                                },
+                                                {
+                                                    text: "No",
+                                                    onPress: () => {
+                                                        console.log("Not deleted...")
+                                                    }
+                                                },
+                                            ]
+                                        )
                                     }}
-                                />
+                                >
+                                    <Text
+                                        style={styles.deleteButton}
+                                    >Delete</Text>
+                                </TouchableOpacity>
                             </View>
                     }}
                 />
@@ -160,13 +187,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     separator: {
-        marginVertical: 30,
+        marginVertical: 10,
         height: 1,
-        width: '80%',
     },
     listItem: {
-        flex: 2,
-        justifyContent: "space-between",
+        flex: 0,
+        justifyContent: "flex-end",
         alignItems: "center",
         flexDirection: "row",
         gap: 10,
@@ -176,5 +202,30 @@ const styles = StyleSheet.create({
         backgroundColor: "#ccc",
         borderRadius: 15,
         padding: 20,
+    },
+    colOne: {
+        width: "50%"
+    },
+    editArea: {
+        flex: 0,
+        flexDirection: "row",
+        width: "20%",
+        gap: 5,
+    },
+    deleteArea: {
+        width: "20%"
+    },
+    editButton: {
+        flex: 2,
+        backgroundColor: "green",
+        textAlign: "center",
+        padding: 5,
+        color: "#eee",
+    },
+    deleteButton: {
+        backgroundColor: "#a32",
+        padding: 5,
+        textAlign: "center",
+        color: "#eee"
     }
 });
