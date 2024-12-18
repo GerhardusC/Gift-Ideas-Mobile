@@ -3,30 +3,30 @@ import { StyleSheet, View, Text, FlatList, Button, TextInput, TouchableOpacity, 
 import * as SQLite from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
-type Todo = {
+type Gift = {
     ID: number,
-    todo: string,
+    gift: string,
 }
 
 export default function GiftIdeasScreen() {
-    const [currentTodo, setCurrentTodo] = useState("");
+    const [currentGift, setCurrentGift] = useState("");
 
     const editInputRef = useRef<TextInput>(null);
 
-    const [editingTodo, setEditingTodo] = useState<number | null>(null);
+    const [editingGift, setEditingGift] = useState<number | null>(null);
 
-    const [todos, setTodos] = useState<Todo[]>([]);
+    const [gifts, setGifts] = useState<Gift[]>([]);
     useEffect(() => {
         (async () => {
             const db = await SQLite.openDatabaseAsync("dev");
             await db.execAsync(`
-CREATE TABLE IF NOT EXISTS todos (
+CREATE TABLE IF NOT EXISTS gifts (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    todo varchar(255)
+    gift varchar(255)
 );                
                 `)
-            const currentTodos = await db.getAllAsync<Todo>("SELECT * FROM todos;")
-            setTodos(currentTodos);
+            const currentGifts = await db.getAllAsync<Gift>("SELECT * FROM gifts;")
+            setGifts(currentGifts);
         })()
     }, [])
 
@@ -34,50 +34,50 @@ CREATE TABLE IF NOT EXISTS todos (
         <View style={styles.container}>
             <Text style={styles.title}>GIFT IDEAS:</Text>
             <TextInput
-                value={currentTodo}
+                value={currentGift}
                 placeholder='Gift name'
                 onChangeText={(newText) => {
-                    setCurrentTodo(newText);
+                    setCurrentGift(newText);
                 }}
             />
             <Button
                 title='Add Gift'
                 onPress={() => {
                     (async () => {
-                        if(currentTodo !== ""){
+                        if(currentGift !== ""){
                             const db = await SQLite.openDatabaseAsync("dev");
                             const res = await db.runAsync(`
-INSERT INTO todos (todo)
+INSERT INTO gifts (gift)
 VALUES (?);
-                        `, [currentTodo])
-                            console.log("Rows changed:", res.changes);
-                            const read = await db.getAllAsync<Todo>("SELECT * FROM todos");
-                            setTodos(read)
-                            setCurrentTodo("");
+                        `, [currentGift])
+                            // console.log("Rows changed:", res.changes);
+                            const read = await db.getAllAsync<Gift>("SELECT * FROM gifts");
+                            setGifts(read)
+                            setCurrentGift("");
                             
                         } else {
-                            Alert.alert("No todo content.")
+                            Alert.alert("No gift content.")
                         }
                     })()
                 }}
             />
             <View style={styles.separator} />
             {
-                todos.length > 0 &&
+                gifts.length > 0 &&
                 <FlatList
                     contentContainerStyle={styles.listContainer}
-                    data={todos}
+                    data={gifts}
                     renderItem={(item) => {
                         return <View style={styles.listItem}>
                                 {
-                                    editingTodo !== item.item.ID ?
+                                    editingGift !== item.item.ID ?
                                     <>
-                                        <Text style={styles.colOne}>{item.item.todo}</Text>
+                                        <Text style={styles.colOne}>{item.item.gift}</Text>
                                         <TouchableOpacity
                                             style={styles.editArea}
                                             onPress={() => {
-                                                setEditingTodo(item.item.ID);
-                                                setCurrentTodo(item.item.todo);
+                                                setEditingGift(item.item.ID);
+                                                setCurrentGift(item.item.gift);
                                             }}
                                         >
                                             <Text style={styles.editButton}>Edit</Text>
@@ -88,16 +88,16 @@ VALUES (?);
                                         <TextInput
                                             style={styles.colOne}
                                             ref={editInputRef}
-                                            value={currentTodo}
+                                            value={currentGift}
                                             autoFocus
                                             onFocus={function () {
                                                 if(editInputRef.current){
-                                                    editInputRef.current.setSelection(0, item.item.todo.length)
+                                                    editInputRef.current.setSelection(0, item.item.gift.length)
                                                 }
                                             }}
-                                            placeholder='New todo'
+                                            placeholder='New gift'
                                             onChangeText={newText => {
-                                                setCurrentTodo(newText);
+                                                setCurrentGift(newText);
                                             }}
                                         />
                                         <View
@@ -107,22 +107,22 @@ VALUES (?);
                                                 title='✅'
                                                 color="#eee"
                                                 onPress={() => {
-                                                    if(currentTodo !== ""){
+                                                    if(currentGift !== ""){
                                                         (async () => {
                                                             const db = await SQLite.openDatabaseAsync("dev");
                                                             const changed = await db.runAsync(`
-UPDATE todos
-SET todo = ?
+UPDATE gifts
+SET gift = ?
 WHERE ID = ?;
-                                                                `, [currentTodo, item.item.ID])
-                                                            console.log(changed.changes)
-                                                            const todos = await db.getAllAsync<Todo>("SELECT * FROM todos;");
-                                                            setTodos(todos);
-                                                            setCurrentTodo("");
-                                                            setEditingTodo(null);
+                                                                `, [currentGift, item.item.ID])
+                                                            // console.log(changed.changes)
+                                                            const gifts = await db.getAllAsync<Gift>("SELECT * FROM gifts;");
+                                                            setGifts(gifts);
+                                                            setCurrentGift("");
+                                                            setEditingGift(null);
                                                         })()
                                                     } else {
-                                                        Alert.alert("No content for todo", "Set the new todo correctly before clicking OK.")
+                                                        Alert.alert("No content for gift", "Set the new gift correctly before clicking OK.")
                                                     }
                                                 }}
                                             />
@@ -130,8 +130,8 @@ WHERE ID = ?;
                                                 title='❌'
                                                 color="#ddd"
                                                 onPress={() => {
-                                                    setEditingTodo(null);
-                                                    setCurrentTodo("");
+                                                    setEditingGift(null);
+                                                    setCurrentGift("");
                                                 }}
                                             />
                                         </View>
@@ -142,16 +142,16 @@ WHERE ID = ?;
                                     onPress={() => {
                                         Alert.alert(
                                             "Are you sure?",
-                                            "Do you really want to delete this todo?",
+                                            "Do you really want to delete this gift?",
                                             [
                                                 {
                                                     text: "Yes",
                                                     onPress: () => {
                                                         (async () => {
                                                             const db = await SQLite.openDatabaseAsync("dev");
-                                                            await db.runAsync("DELETE FROM todos WHERE ID = (?)", [item.item.ID]);
-                                                            const todos = await db.getAllAsync<Todo>("SELECT ID, todo FROM todos");
-                                                            setTodos(todos);
+                                                            await db.runAsync("DELETE FROM gifts WHERE ID = (?)", [item.item.ID]);
+                                                            const gifts = await db.getAllAsync<Gift>("SELECT ID, gift FROM gifts;");
+                                                            setGifts(gifts);
                                                         })()
                                                     }
                                                 },
