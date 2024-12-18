@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS gifts (
 INSERT INTO gifts (gift)
 VALUES (?);
                         `, [currentGift])
-                            // console.log("Rows changed:", res.changes);
                             const read = await db.getAllAsync<Gift>("SELECT * FROM gifts");
                             setGifts(read)
                             setCurrentGift("");
@@ -115,7 +114,6 @@ UPDATE gifts
 SET gift = ?
 WHERE ID = ?;
                                                                 `, [currentGift, item.item.ID])
-                                                            // console.log(changed.changes)
                                                             const gifts = await db.getAllAsync<Gift>("SELECT * FROM gifts;");
                                                             setGifts(gifts);
                                                             setCurrentGift("");

@@ -49,7 +49,6 @@ CREATE TABLE IF NOT EXISTS activities (
 INSERT INTO activities (activity)
 VALUES (?);
                         `, [currentActivity])
-                            // console.log("Rows changed:", res.changes);
                             const read = await db.getAllAsync<Activity>("SELECT * FROM activities");
                             setActivities(read)
                             setCurrentActivity("");
@@ -114,7 +113,6 @@ UPDATE activities
 SET activity = ?
 WHERE ID = ?;
                                                                 `, [currentActivity, item.item.ID])
-                                                            // console.log(changed.changes)
                                                             const activities = await db.getAllAsync<Activity>("SELECT * FROM activities;");
                                                             setActivities(activities);
                                                             setCurrentActivity("");
