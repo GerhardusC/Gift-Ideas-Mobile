@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { StyleSheet, View, Text, FlatList, Button, TextInput, TouchableOpacity, Alert } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { useEffect, useState } from 'react';
+import { getGifts } from '@/utils/dbinteraction';
 
 type Gift = {
     ID: number,
@@ -18,15 +19,10 @@ export default function GiftIdeasScreen() {
     const [gifts, setGifts] = useState<Gift[]>([]);
     useEffect(() => {
         (async () => {
-            const db = await SQLite.openDatabaseAsync("dev");
-            await db.execAsync(`
-CREATE TABLE IF NOT EXISTS gifts (
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    gift varchar(255)
-);                
-                `)
-            const currentGifts = await db.getAllAsync<Gift>("SELECT * FROM gifts;")
-            setGifts(currentGifts);
+            const gifts = await getGifts()
+            if(gifts !== false){
+                setGifts(gifts);
+            }
         })()
     }, [])
 
@@ -45,7 +41,7 @@ CREATE TABLE IF NOT EXISTS gifts (
                 onPress={() => {
                     (async () => {
                         if(currentGift !== ""){
-                            const db = await SQLite.openDatabaseAsync("dev");
+                            const db = await SQLite.openDatabaseAsync("gifts");
                             const res = await db.runAsync(`
 INSERT INTO gifts (gift)
 VALUES (?);
@@ -108,7 +104,7 @@ VALUES (?);
                                                 onPress={() => {
                                                     if(currentGift !== ""){
                                                         (async () => {
-                                                            const db = await SQLite.openDatabaseAsync("dev");
+                                                            const db = await SQLite.openDatabaseAsync("gifts");
                                                             const changed = await db.runAsync(`
 UPDATE gifts
 SET gift = ?
@@ -146,7 +142,7 @@ WHERE ID = ?;
                                                     text: "Yes",
                                                     onPress: () => {
                                                         (async () => {
-                                                            const db = await SQLite.openDatabaseAsync("dev");
+                                                            const db = await SQLite.openDatabaseAsync("gifts");
                                                             await db.runAsync("DELETE FROM gifts WHERE ID = (?)", [item.item.ID]);
                                                             const gifts = await db.getAllAsync<Gift>("SELECT ID, gift FROM gifts;");
                                                             setGifts(gifts);
